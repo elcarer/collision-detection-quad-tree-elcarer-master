@@ -1,25 +1,27 @@
-import Rectangle from "./rectangle.js";
-import Circle from "./circle.js";
-import Triangle from "./Triangle.js";
-import Hex from "./hex.js";
+import Rectangle from "./rectangle.js"
+import Circle from "./circle.js"
+import Triangle from "./Triangle.js"
+import Hex from "./hex.js"
 /*"type": "module",*/
-const canvas = document.getElementById("cnvs");
+const canvas = document.getElementById("cnvs")
 
-const gameState = {figure:[]};
+const gameState = {figure:[]}
+const timeState = {hp:3}
 
 function load () {
-    for (let i = 0; i < 10; i++){
-        gameState.figure.push(new Circle(Math.random() * canvas.width, Math.random() * canvas.height, 50));
-        gameState.figure.push(new Rectangle(Math.random() * canvas.width, Math.random() * canvas.height, 50));
-        /*gameState.figure.push(new Triangle(Math.random() * canvas.width, Math.random() * canvas.height, 50));
-        gameState.figure.push(new Hex(Math.random() * canvas.width, Math.random() * canvas.height, 50));*/
+    for (let i = 0; i < 1000; i++){
+        gameState.figure.push(new Circle(Math.random() * canvas.width, Math.random() * canvas.height, 50, timeState.hp))
+        gameState.figure.push(new Rectangle(Math.random() * canvas.width, Math.random() * canvas.height, 50, timeState.hp))
+        gameState.figure.push(new Triangle(Math.random() * canvas.width, Math.random() * canvas.height, 50, timeState.hp))
+        gameState.figure.push(new Hex(Math.random() * canvas.width, Math.random() * canvas.height, 50, timeState.hp))
     }
-    }
+    run()
+}
 
 function queueUpdates(numTicks) {
     for (let i = 0; i < numTicks; i++) {
-        gameState.lastTick = gameState.lastTick + gameState.tickLength
-        update(gameState.lastTick)
+        timeState.lastTick = timeState.lastTick + timeState.tickLength
+        update(timeState.lastTick)
     }
 }
 
@@ -30,7 +32,7 @@ function draw(tFrame) {
     // draw
     gameState.figure.forEach(element => {
         if (element.constructor.name === "Rectangle") {
-
+            context.beginPath()
             context.rect(element.x, element.y, element.h, element.h)
             context.fillStyle = element.c
             context.fill()
@@ -66,8 +68,7 @@ function draw(tFrame) {
 }
 
 function update(tick) {
-    gameState.figure.forEach(element => {
-        let el = element
+    gameState.figure.forEach((element, i1) => {
         element.x += Math.cos(element.v) * element.sp
         element.y += Math.sin(element.v) * element.sp
         if (element.x > canvas.width){
@@ -82,26 +83,28 @@ function update(tick) {
         if (element.y < 0){
             element.y = canvas.height
         }
-        gameState.figure.forEach(element => {
+        gameState.figure.forEach((element2, i2) => {
             let stop = false
-            if ((el !== element)&&(el.intersects(element))&&(stop===false)){
-                if (el.smartintersects(element)) {
-                    let i1, i2
-                    i1 = gameState.figure.indexOf(el)
-                    i2 = gameState.figure.indexOf(element)
-                    let v1 = el.v
-                    el.v = element.v
-                    element.v = v1
-                    el.hp--
+            if ((element !== element2)&&(element.intersects(element2))&&(stop===false)){
+                if (element.smartintersects(element2)) {
+                    /*let i1 = gameState.figure.indexOf(element)
+                    let i2 = gameState.figure.indexOf(element2)*/
+                    let v1 = element.v
+                    element.v = element2.v
+                    element2.v = v1
                     element.hp--
-                    el.c = 'rgb(' + Math.floor(Math.random() * 255) + ',' +
+                    element2.hp--
+                    gameState.figure[i1].c = 'rgb(' + Math.floor(Math.random() * 255) + ',' +
                         Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')'
-                    element.c = 'rgb(' + Math.floor(Math.random() * 255) + ',' +
+                    gameState.figure[i2].c = 'rgb(' + Math.floor(Math.random() * 255) + ',' +
                         Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')'
-                    if (el.hp < 1) {
+                    /*console.log(gameState.figure.indexOf(element))
+                    console.log(i1)*/
+                    if (element.hp < 1) {
                         gameState.figure.splice(i1, 1)
                     }
-                    if (element.hp < 1) {
+                    i2 = gameState.figure.indexOf(element2)
+                    if (element2.hp < 1) {
                         gameState.figure.splice(i2, 1)
                     }
                     stop = true
@@ -113,32 +116,28 @@ function update(tick) {
 }
 
 function run(tFrame) {
-    gameState.stopCycle = window.requestAnimationFrame(run)
+    timeState.stopCycle = window.requestAnimationFrame(run)
 
-    const nextTick = gameState.lastTick + gameState.tickLength
+    const nextTick = timeState.lastTick + timeState.tickLength
     let numTicks = 0
 
     if (tFrame > nextTick) {
-        const timeSinceTick = tFrame - gameState.lastTick
-        numTicks = Math.floor(timeSinceTick / gameState.tickLength)
+        const timeSinceTick = tFrame - timeState.lastTick
+        numTicks = Math.floor(timeSinceTick / timeState.tickLength)
     }
     queueUpdates(numTicks)
     draw(tFrame)
-    gameState.lastRender = tFrame
-}
-
-function stopGame(handle) {
-    window.cancelAnimationFrame(handle);
+    timeState.lastRender = tFrame
 }
 
 function setup() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
-    gameState.lastTick = performance.now()
-    gameState.lastRender = gameState.lastTick
-    gameState.tickLength = 15 //ms
+    timeState.lastTick = performance.now()
+    timeState.lastRender = timeState.lastTick
+    timeState.tickLength = 15 //ms
     load ()
 }
 
-setup();
-run();
+setup()
+
